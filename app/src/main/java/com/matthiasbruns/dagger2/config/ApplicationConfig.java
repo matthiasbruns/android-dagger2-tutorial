@@ -4,12 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Created by Bruns on 20.07.2017.
  */
-@Singleton
 public class ApplicationConfig {
 
     private static final String PREF_NAME = "dagger2";

@@ -9,13 +9,9 @@ import android.support.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Singleton;
-
 /**
  * Created by Bruns on 20.07.2017.
  */
-
-@Singleton
 public class LemmingRestRepository implements LemmingRepository {
 
     private static final Lemming LEMMING = new Lemming();

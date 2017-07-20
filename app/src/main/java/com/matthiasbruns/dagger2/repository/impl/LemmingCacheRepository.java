@@ -17,7 +17,6 @@ import javax.inject.Singleton;
 /**
  * Created by Bruns on 20.07.2017.
  */
-@Singleton
 public class LemmingCacheRepository implements LemmingRepository {
 
     @SuppressLint("UseSparseArrays")
