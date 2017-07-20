@@ -1,7 +1,7 @@
-package com.matthiasbruns.dagger2.repository.impl;
+package com.matthiasbruns.dagger2.lemming.repository.impl;
 
-import com.matthiasbruns.dagger2.data.Lemming;
-import com.matthiasbruns.dagger2.repository.LemmingRepository;
+import com.matthiasbruns.dagger2.lemming.data.Lemming;
+import com.matthiasbruns.dagger2.lemming.repository.LemmingRepository;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;

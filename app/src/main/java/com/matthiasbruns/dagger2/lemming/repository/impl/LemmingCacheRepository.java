@@ -1,7 +1,7 @@
-package com.matthiasbruns.dagger2.repository.impl;
+package com.matthiasbruns.dagger2.lemming.repository.impl;
 
-import com.matthiasbruns.dagger2.data.Lemming;
-import com.matthiasbruns.dagger2.repository.LemmingRepository;
+import com.matthiasbruns.dagger2.lemming.data.Lemming;
+import com.matthiasbruns.dagger2.lemming.repository.LemmingRepository;
 
 import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.inject.Singleton;
 
 /**
  * Created by Bruns on 20.07.2017.

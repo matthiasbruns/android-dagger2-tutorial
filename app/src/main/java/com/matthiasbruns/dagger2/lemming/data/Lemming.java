@@ -1,4 +1,4 @@
-package com.matthiasbruns.dagger2.data;
+package com.matthiasbruns.dagger2.lemming.data;
 
 /**
  * Created by Bruns on 20.07.2017.

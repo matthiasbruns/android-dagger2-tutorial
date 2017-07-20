@@ -4,6 +4,7 @@ import com.matthiasbruns.dagger2.config.ApplicationConfig;
 
 import android.app.Activity;
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import javax.inject.Named;
 
@@ -11,25 +12,39 @@ import dagger.Module;
 import dagger.Provides;
 
 /**
- * Created by Bruns on 20.07.2017.
+ * This module injects dependencies important for activities.
  */
 @Module
 public class ActivityModule {
 
+    /**
+     * The activity which belongs to this module
+     */
+    @NonNull
     private final Activity mActivity;
 
-    public ActivityModule(final Activity activity) {
+    public ActivityModule(@NonNull final Activity activity) {
         mActivity = activity;
     }
 
+    /**
+     * Provides the activity context
+     */
     @Provides
+    @ActivityScope
     Context provideContext() {
         return mActivity;
     }
 
+    /**
+     * Provides a title suffix for the app
+     *
+     * @param config required to decide which title to use
+     */
     @Provides
-    @Named("title")
-    String provideTitle(ApplicationConfig config) {
+    @Named("titleSuffix")
+    @ActivityScope
+    String provideTitleSuffix(@NonNull final ApplicationConfig config) {
         if (config.isOnlineAllowed()) {
             return " - Online";
         }

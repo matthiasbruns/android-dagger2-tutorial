@@ -1,9 +1,9 @@
 package com.matthiasbruns.dagger2.injection;
 
 import com.matthiasbruns.dagger2.config.ApplicationConfig;
-import com.matthiasbruns.dagger2.repository.LemmingRepository;
-import com.matthiasbruns.dagger2.repository.impl.LemmingCacheRepository;
-import com.matthiasbruns.dagger2.repository.impl.LemmingRestRepository;
+import com.matthiasbruns.dagger2.lemming.repository.LemmingRepository;
+import com.matthiasbruns.dagger2.lemming.repository.impl.LemmingCacheRepository;
+import com.matthiasbruns.dagger2.lemming.repository.impl.LemmingRestRepository;
 
 import android.support.annotation.NonNull;
 
@@ -13,11 +13,15 @@ import dagger.Module;
 import dagger.Provides;
 
 /**
- * Created by Bruns on 20.07.2017.
+ * This module provides repositories for this app.
  */
 @Module
 public class RepositoryModule {
 
+    /**
+     * The {@link LemmingRepository} can have multiple implementations.
+     * Based on the {@link ApplicationConfig} the returned implementation can differ.
+     */
     @Provides
     @Singleton
     LemmingRepository provideLemmingRepository(@NonNull final ApplicationConfig config) {

@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import javax.inject.Scope;
 
 /**
- * Created by Bruns on 20.07.2017.
+ * A custom scope used to mark a component as activity scoped.
  */
 @Scope
 @Retention(RetentionPolicy.RUNTIME)

@@ -2,7 +2,7 @@ package com.matthiasbruns.dagger2.injection;
 
 import com.matthiasbruns.dagger2.DaggerApplication;
 import com.matthiasbruns.dagger2.config.ApplicationConfig;
-import com.matthiasbruns.dagger2.repository.LemmingRepository;
+import com.matthiasbruns.dagger2.lemming.repository.LemmingRepository;
 
 import android.support.annotation.NonNull;
 
@@ -11,7 +11,8 @@ import javax.inject.Singleton;
 import dagger.Component;
 
 /**
- * Created by Bruns on 20.07.2017.
+ * This components act as the app wide dependency component for this app.
+ * It provides repositories and configs.
  */
 @Singleton
 @Component(modules = {AppModule.class, RepositoryModule.class})

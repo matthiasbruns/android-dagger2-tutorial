@@ -1,8 +1,10 @@
-package com.matthiasbruns.dagger2;
+package com.matthiasbruns.dagger2.lemming.view;
 
+import com.matthiasbruns.dagger2.DaggerApplication;
+import com.matthiasbruns.dagger2.R;
 import com.matthiasbruns.dagger2.injection.ActivityModule;
-import com.matthiasbruns.dagger2.injection.DaggerLemminComponent;
-import com.matthiasbruns.dagger2.repository.LemmingRepository;
+import com.matthiasbruns.dagger2.lemming.injection.DaggerLemmingComponent;
+import com.matthiasbruns.dagger2.lemming.repository.LemmingRepository;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -17,14 +19,14 @@ public class LemmingActivity extends AppCompatActivity {
     protected LemmingRepository mLemmingRepository;
 
     @Inject
-    @Named("title")
+    @Named("titleSuffix")
     protected String mTitleSuffix;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        DaggerLemminComponent.builder()
+        DaggerLemmingComponent.builder()
                 .appComponent(DaggerApplication.application(this).component())
                 .activityModule(new ActivityModule(this))
                 .build().inject(this);
