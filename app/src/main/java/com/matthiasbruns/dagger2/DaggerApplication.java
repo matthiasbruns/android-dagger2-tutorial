@@ -4,7 +4,7 @@ import com.matthiasbruns.dagger2.config.ApplicationConfig;
 import com.matthiasbruns.dagger2.injection.AppComponent;
 import com.matthiasbruns.dagger2.injection.AppModule;
 import com.matthiasbruns.dagger2.injection.DaggerAppComponent;
-import com.matthiasbruns.dagger2.injection.LemmingModule;
+import com.matthiasbruns.dagger2.injection.RepositoryModule;
 
 import android.app.Application;
 import android.content.Context;
@@ -46,7 +46,7 @@ public class DaggerApplication extends Application {
         super.onCreate();
         mAppModule = new AppModule(this);
         mComponent = DaggerAppComponent.builder()
-                .lemmingModule(new LemmingModule())
+                .repositoryModule(new RepositoryModule())
                 .appModule(mAppModule)
                 .build();
 

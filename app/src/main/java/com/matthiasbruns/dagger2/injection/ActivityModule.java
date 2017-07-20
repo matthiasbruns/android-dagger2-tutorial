@@ -1,7 +1,11 @@
 package com.matthiasbruns.dagger2.injection;
 
+import com.matthiasbruns.dagger2.config.ApplicationConfig;
+
 import android.app.Activity;
 import android.content.Context;
+
+import javax.inject.Named;
 
 import dagger.Module;
 import dagger.Provides;
@@ -22,4 +26,14 @@ public class ActivityModule {
     Context provideContext() {
         return mActivity;
     }
+
+    @Provides
+    @Named("title")
+    String provideTitle(ApplicationConfig config) {
+        if (config.isOnlineAllowed()) {
+            return " - Online";
+        }
+        return " - Offline";
+    }
+
 }

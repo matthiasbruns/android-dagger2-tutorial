@@ -16,7 +16,7 @@ import dagger.Provides;
  * Created by Bruns on 20.07.2017.
  */
 @Module
-public class LemmingModule {
+public class RepositoryModule {
 
     @Provides
     @Singleton
