@@ -47,7 +47,7 @@ We will also have a Lemming model, which stores the lemming data.
 
 ## Lemming
 
-````kotlin
+````java
 /**
  * Simple pojo which stores some lemming data
  */
@@ -95,7 +95,7 @@ We will _implement_ two repositories:
 * LemmingCacheRepository
 * LemmingRestRepository
 
-````kotlin
+````java
 /**
  * Simple interface to provide the implementation of the repository pattern.
  * THIS IS A SIMPLIFIED VERSION OF A REPOSITORY!
@@ -134,7 +134,7 @@ public interface Repository<T, ID> {
 The Repository is a base interface which allows implementing classes to define the model and id class.
 It provides the usual CRUD operations.
 
-````kotlin
+````java
 /**
  * The base interface which can be implemented to provide access to lemming data.
  */
@@ -144,7 +144,7 @@ public interface LemmingRepository extends Repository<Lemming, Integer> {
 
 The LemmingRepository defines the datatypes of the model and id generics.
 
-````kotlin
+````java
 /**
  * The LemmingCacheRepository uses stores lemmings in memory.
  */
@@ -513,14 +513,14 @@ The DaggerApplication class prepares the Dagger dependency graph. It initializes
 and decides, if the app should use online features or not. If another component depends on this
 AppComponent, it can receive the created AppComponent through:
 
-`````java
+````java
 /**
  * The dagger {@link AppComponent} which other components can use to depend on.
  */
 public AppComponent component() {
     return mComponent;
 }
-`````
+````
 
 The AppComponent uses two modules, which need to be created during the component creation:
 
@@ -695,13 +695,13 @@ Since the LemmingComponent depends in the AppComponent and the AppComponent allo
 the LemmingComponent to access the LemmingRepository, we receive the same instance as
 stored in the AppComponent.
 
-`````java
+````java
 // Create the LemmingComponent and inject this activity
 DaggerLemmingComponent.builder()
         .appComponent(DaggerApplication.application(this).component())
         .activityModule(new ActivityModule(this))
         .build().inject(this);
-`````
+````
 
 The creation of the LemmingComponent looks like the creation of the AppComponent in 
 the DaggerApplication class. Since we depend on the AppComponent, we have to get it
