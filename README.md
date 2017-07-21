@@ -16,11 +16,28 @@ In this tutorial we will use the following libraries:
 
 * Dagger 2 [https://github.com/google/dagger](https://github.com/google/dagger)
 
+We create two productFlavors which we use later to show, how Dagger can improve injection based on
+external settings.
+
+````groovy
+flavorDimensions "connectivity"
+productFlavors {
+    offline {
+        dimension "connectivity"
+    }
+
+    online {
+        dimension "connectivity"
+    }
+}
+````
+
 The resulting build.gradle can be found here:
 
 [https://github.com/matthiasbruns/android-dagger2-tutorial/blob/master/app/build.gradle](https://github.com/matthiasbruns/android-dagger2-tutorial/blob/master/app/build.gradle)
 
 Since we use the annotationProcessor, be sure to activate "Annotation Processing" in Android Studio.
+
 
 ## Intro
 
@@ -61,6 +78,34 @@ public class Lemming {
 ````
 
 A simple pojo which stores data of a lemming in a class.
+
+## ApplicationConfig
+
+````java
+/**
+ * Stores runtime settings for this app.
+ * You could also put the settings into the {@link android.content.SharedPreferences},
+ * but we won't do this for this example.
+ */
+public class ApplicationConfig {
+
+    /**
+     * Flag is online features are allowed or not
+     */
+    private boolean mOnlineAllowed;
+
+    public boolean isOnlineAllowed() {
+        return mOnlineAllowed;
+    }
+
+    public void setOnlineAllowed(final boolean onlineAllowed) {
+        mOnlineAllowed = onlineAllowed;
+    }
+}
+````
+
+This class is used during injection to decide if some injection results use online or offline features.
+It will be used later during the AppComponent creation.
 
 ## LemmingRepository
 
@@ -256,9 +301,423 @@ a rest api.
 
 ## Dagger 2
 
+### Terminology
+
+Dagger uses components and modules.
+A components combines modules into a set of dependency providers.
+Each module knows how to provide certain dependencies.
+Components should be used per domain and have defines lifecycles.
+
+### Dependency Graph
+
 Let's start to prepare the dependency graph. But what is the dependency graph?
-Dagger has no predefined structure and inheritence rules. You as a developer can decide which 
+Dagger has no predefined structure and inheritance rules. You as a developer can decide which 
 components depend on other components, what dependencies live the lifetime of an app and which should
 be recreated each injection.
 
 ![Dependency Graph Components](./doc/dependency_graph1.png)
+
+This is how you components depend on each other.  The AppComponents created singletons and app-wide dependencies.
+And the LemmingComponents provides dependencies for the lemming domain.
+
+### AppComponent
+
+````java
+/**
+ * This components act as the app wide dependency component for this app.
+ * It provides repositories and configs.
+ */
+@Singleton
+@Component(modules = {AppModule.class, RepositoryModule.class})
+public interface AppComponent {
+
+    /**
+     * Allows components which depend on this component to use the
+     * {@link ApplicationConfig} managed in here.
+     */
+    ApplicationConfig config();
+
+    /**
+     * Injects dependencies into the {@link DaggerApplication} class
+     */
+    void inject(@NonNull final DaggerApplication application);
+
+    /**
+     * Allows components which depend on this component to use the
+     * {@link LemmingRepository} managed in here.
+     */
+    LemmingRepository lemmingRepository();
+}
+````
+
+The AppComponent uses two modules:
+
+* AppModule
+* RepositoryModule
+
+The AppModule provides the application context and the ApplicationConfig, which are both stored as
+a singleton in the AppComponent. To allow other components which depend on the AppComponent to access
+the ApplicationConfig and the LemmingRepository in this component, we have to define two methods:
+
+* ApplicationConfig config()
+* LemmingRepository lemmingRepository()
+
+If we wouldn't define the methods, the LemmingComponent would receive new instances of both components.
+This would be a problem for the ApplicationConfig, because we need to have the same information in all
+classes. 
+
+The inject method describes, who is allowed to receive dependencies from this component. 
+In this case, only the DaggerApplication can be injected.
+
+### AppModule
+
+````java
+/**
+ * This module provides app-wide dependencies.
+ */
+@Module
+public class AppModule {
+
+    /**
+     * The application this module belongs to
+     */
+    @NonNull
+    private final DaggerApplication mApplication;
+
+    public AppModule(@NonNull final DaggerApplication application) {
+        mApplication = application;
+    }
+
+    /**
+     * The application context of this app as a Singleton
+     */
+    @Provides
+    @Singleton
+    Context provideApplicationContext() {
+        return mApplication;
+    }
+
+    /**
+     * The application config of this app as a Singleton
+     */
+    @Provides
+    @Singleton
+    ApplicationConfig providesApplicationConfig() {
+        return new ApplicationConfig(mApplication);
+    }
+
+    /**
+     * The {@link DaggerApplication} of this app as a Singleton
+     */
+    @Provides
+    @Singleton
+    DaggerApplication providesDaggerApplication() {
+        return mApplication;
+    }
+}
+````
+
+The AppModule provides the application context, DaggerApplication and the ApplicationConfig.
+Each of them are provided as a singleton. 
+The @Singleton annotation is the same as the one in the AppComponent. If the component's annotation
+and the provides annotation match, the created object is treated as a singleton in this component.
+If you leave our the annotation in the provide methods, every time when there is an injection, the module
+creates a new instance of the class.
+
+### RepositoryModule
+
+````java
+/**
+ * This module provides repositories for this app.
+ */
+@Module
+public class RepositoryModule {
+
+    /**
+     * The {@link LemmingRepository} can have multiple implementations.
+     * Based on the {@link ApplicationConfig} the returned implementation can differ.
+     */
+    @Provides
+    @Singleton
+    LemmingRepository provideLemmingRepository(@NonNull final ApplicationConfig config) {
+        if (config.isOnlineAllowed()) {
+            return new LemmingRestRepository();
+        }
+        return new LemmingCacheRepository();
+    }
+}
+````
+
+The repository module decides, which repository will be injected. In our case we have a boolean flag
+in our config, which toggles, if the online mode is enabled or not. The ApplicationConfig is injected
+by dagger. Since this module is used in the AppComponent, it receives the singleton config object
+provided by the AppModule above.
+
+### DaggerApplication
+
+````java
+/**
+ * Main entry point of this app.
+ * Prepares dependency injection.
+ */
+public class DaggerApplication extends Application {
+
+    /**
+     * The ApplicationConfig is used to manage app-wide settings.
+     */
+    @NonNull
+    @Inject
+    protected ApplicationConfig mApplicationConfig;
+
+    /**
+     * The app-wide {@link AppComponent}.
+     */
+    @NonNull
+    private AppComponent mComponent;
+
+    /**
+     * Helper to get the {@link DaggerApplication} from the application context.
+     */
+    @NonNull
+    public static DaggerApplication application(@NonNull final Context context) {
+        return (DaggerApplication) context.getApplicationContext();
+    }
+
+    /**
+     * The dagger {@link AppComponent} which other components can use to depend on.
+     */
+    public AppComponent component() {
+        return mComponent;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        // Initialize the dependency graph
+        mComponent = DaggerAppComponent.builder()
+                .repositoryModule(new RepositoryModule())
+                .appModule(new AppModule(this))
+                .build();
+
+        // Inject dependencies (ApplicationConfig) into this class
+        mComponent.inject(this);
+
+        // Decide, if we can use online features or not
+        mApplicationConfig.setOnlineAllowed(BuildConfig.FLAVOR.contains("online"));
+    }
+}
+````
+
+The DaggerApplication class prepares the Dagger dependency graph. It initializes the AppComponents
+and decides, if the app should use online features or not. If another component depends on this
+AppComponent, it can receive the creates AppComponent through:
+
+`````java
+/**
+ * The dagger {@link AppComponent} which other components can use to depend on.
+ */
+public AppComponent component() {
+    return mComponent;
+}
+`````
+
+The AppComponent uses two modules, which need to be created during the component creation:
+
+````java
+// Initialize the dependency graph
+mComponent = DaggerAppComponent.builder()
+        .repositoryModule(new RepositoryModule())
+        .appModule(new AppModule(this))
+        .build();
+````
+
+### LemmingComponent
+
+After we've prepared our AppComponent, we can start building other domain components.
+The LemmingComponent provides all dependencies required in the lemming domain of this app.
+
+````java
+/**
+ * A domain based components to provide required dependencies for the lemmings domain. Depends on
+ * {@link AppComponent} to receive the {@link com.matthiasbruns.dagger2.config.ApplicationConfig} as
+ * a Singleton
+ */
+@ActivityScope
+@Component(dependencies = AppComponent.class, modules = ActivityModule.class)
+public interface LemmingComponent {
+
+    /**
+     * Injects dependencies into the {@link LemmingActivity}
+     */
+    void inject(LemmingActivity activity);
+
+}
+````
+
+As you can see, we've marked this component as ActivityScoped. Since we depend on a Singleton-scoped
+component (AppComponent), Dagger forces us to create a new annotation with a weaker scope. Dagger
+can detect by itself, which annotations are weaker than others and builds an internal graph based 
+on this information.
+
+````java
+/**
+ * A custom scope used to mark a component as activity scoped.
+ */
+@Scope
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ActivityScope {
+}
+````
+
+Each scope annotation looks like this and the only thing that differs is the name of the annotation.
+
+Let's head back to the LemmingComponent. This component uses one module - the ActivityModule and
+allows the LemmingActivity to be injected by this component.
+
+### ActivityModule
+
+````java
+/**
+ * This module injects dependencies important for activities.
+ */
+@Module
+public class ActivityModule {
+
+    /**
+     * The activity which belongs to this module
+     */
+    @NonNull
+    private final Activity mActivity;
+
+    public ActivityModule(@NonNull final Activity activity) {
+        mActivity = activity;
+    }
+
+    /**
+     * Provides the activity context
+     */
+    @Provides
+    @ActivityScope
+    Context provideContext() {
+        return mActivity;
+    }
+
+    /**
+     * Provides a title suffix for the app
+     *
+     * @param config required to decide which title to use
+     */
+    @Provides
+    @Named("titleSuffix")
+    @ActivityScope
+    String provideTitleSuffix(@NonNull final ApplicationConfig config) {
+        if (config.isOnlineAllowed()) {
+            return " - Online";
+        }
+        return " - Offline";
+    }
+}
+````
+
+The ActivityModule provides a String method to show in an exemplary way, how you can decide which
+object to return based on app settings.
+In our out of the question useful example, we return "Online" or "Offline" based in the isOnlineAllowed()
+method in the ApplicationConfig. A new annotation is introduced here
+
+````java
+@Named("titleSuffix")
+````
+
+Dagger decides which method to call when injectino by the return type. If you have two methods with 
+the same return type, you have to name them by adding a @Named annotation. In the class, which received
+the injection, you need to add @Named(name) to the @Inject annotation to tell Dagger what to inject.
+
+### LemmingAcitivity
+
+````java
+/**
+ * Example activity, which displays the class name of the injected {@link LemmingRepository}
+ */
+public class LemmingActivity extends AppCompatActivity {
+
+    /**
+     * Required to load lemming data.
+     * Has to be injected.
+     */
+    @Inject
+    protected LemmingRepository mLemmingRepository;
+
+    /**
+     * Indicator which displayed what version we use
+     */
+    @Inject
+    @Named("titleSuffix")
+    protected String mTitleSuffix;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Create the LemmingComponent and inject this activity
+        DaggerLemmingComponent.builder()
+                .appComponent(DaggerApplication.application(this).component())
+                .activityModule(new ActivityModule(this))
+                .build().inject(this);
+
+        // Initialize the layout
+        setContentView(R.layout.activity_main);
+
+        // Set the content of the TextView to be the class name of the injected LemmingRepository
+        ((TextView) findViewById(R.id.text)).setText(mLemmingRepository.getClass().getSimpleName());
+
+        // Add the title suffix to the activity title
+        setTitle(getTitle() + mTitleSuffix);
+    }
+}
+````
+
+We inject two object into this activity
+
+````java
+@Inject
+protected LemmingRepository mLemmingRepository;
+
+@Inject
+@Named("titleSuffix")
+protected String mTitleSuffix;
+````
+The LemmingRepository is provided by the AppModule in the AppComponent.
+The title suffix String comes from the AcivitiyModule in the LemmingComponent.
+Since the LemmingComponent depends in the AppComponent and the AppComponent allows
+the LemmingComponent to access the LemmingRepository, we receive the same instance as
+stores in the AppComponent.
+
+`````java
+// Create the LemmingComponent and inject this activity
+DaggerLemmingComponent.builder()
+        .appComponent(DaggerApplication.application(this).component())
+        .activityModule(new ActivityModule(this))
+        .build().inject(this);
+`````
+
+The creation of the LemmingComponent looks like the creation of the AppComponent in 
+the DaggerApplication class. Since we depend on the AppComponent, we have to get it
+from the DaggerApplication class.
+
+## Summary
+
+I went through a quick example to show you how to use Dagger 2. The guide explained the
+dependency graph and scopes, how to create singletons and what is required to allow components
+to use dependencies from other components.
+ 
+This guide picked created a case, where to product flavors needed different behaviour in some cases.
+Dagger had to decide, if it used the offline or online implementation of the LemmingRepository during
+injection and which String to return for the title in the ActivityModule.
+ 
+## Conclusion
+ 
+Dependency injection is a good way to get rid of the singleton antipattern.
+When required, you can easily manipulate what is being injected in the providing methods 
+and do not have to copy & paste big if-else constructs into classes.
+Classes do not need to know where "things" come from and how to get them anymore.

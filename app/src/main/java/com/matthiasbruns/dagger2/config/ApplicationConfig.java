@@ -1,25 +1,16 @@
 package com.matthiasbruns.dagger2.config;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-
-import javax.inject.Inject;
-
 /**
- * Created by Bruns on 20.07.2017.
+ * Stores runtime settings for this app.
+ * You could also put the settings into the {@link android.content.SharedPreferences},
+ * but we won't do this for this example.
  */
 public class ApplicationConfig {
 
-    private static final String PREF_NAME = "dagger2";
-
+    /**
+     * Flag is online features are allowed or not
+     */
     private boolean mOnlineAllowed;
-
-    private SharedPreferences mPreferences;
-
-    @Inject
-    public ApplicationConfig(final Context context) {
-        mPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-    }
 
     public boolean isOnlineAllowed() {
         return mOnlineAllowed;

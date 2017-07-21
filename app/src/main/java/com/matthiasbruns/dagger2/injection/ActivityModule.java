@@ -50,5 +50,4 @@ public class ActivityModule {
         }
         return " - Offline";
     }
-
 }
