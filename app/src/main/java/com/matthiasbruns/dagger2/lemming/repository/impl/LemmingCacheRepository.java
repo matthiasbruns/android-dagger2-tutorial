@@ -13,34 +13,52 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Bruns on 20.07.2017.
+ * The LemmingCacheRepository uses stores lemmings in memory.
  */
 public class LemmingCacheRepository implements LemmingRepository {
 
+    /**
+     * Our Cache.
+     */
     @SuppressLint("UseSparseArrays")
     private Map<Integer, Lemming> mLemmingHashMap = new HashMap<>();
 
+    /**
+     * Gets all lemmings from the cache
+     */
     @Override
     public List<Lemming> all() {
         return new ArrayList<>(mLemmingHashMap.values());
     }
 
+    /**
+     * Deletes a lemming by its id from the cache.
+     */
     @Override
     public void delete(@NonNull final Integer integer) {
         mLemmingHashMap.remove(integer);
     }
 
+    /**
+     * Returns the lemming by its id.
+     */
     @Override
     @Nullable
     public Lemming get(@NonNull final Integer integer) {
         return mLemmingHashMap.get(integer);
     }
 
+    /**
+     * Adds a new lemming into the cache
+     */
     @Override
     public void insert(@NonNull final Lemming lemming) {
         mLemmingHashMap.put(lemming.getId(), lemming);
     }
 
+    /**
+     * Updates a cached lemming by its id
+     */
     @Override
     public void update(@NonNull final Lemming lemming) {
         // Cheap - I know - is enough for this example
