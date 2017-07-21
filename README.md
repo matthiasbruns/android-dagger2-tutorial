@@ -261,4 +261,4 @@ Dagger has no predefined structure and inheritence rules. You as a developer can
 components depend on other components, what dependencies live the lifetime of an app and which should
 be recreated each injection.
 
-![Dependency Graph Components](./docs/dependency_graph1.png)
+![Dependency Graph Components](./doc/dependency_graph1.png)
